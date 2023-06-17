@@ -12,7 +12,8 @@ contract OpenProfile is IOpenProfile, IVersioning {
 
 
     string constant name = "OPEN_PROFILE"; 
-    uint256 constant version = 1;   
+    uint256 constant version = 3;   
+    address self; 
 
     IOpenProfileConsole console;    
     IOpenDirectory directory;     
@@ -22,26 +23,32 @@ contract OpenProfile is IOpenProfile, IVersioning {
     mapping(address=>mapping(uint256=>bool)) acceptedSharedMediaByAddress; 
 
     uint256 [] pendingSocialRequests; 
+    mapping(uint256=>bool) isClosedSocialRequestById; 
     mapping(uint256=>SocialRequest) socialRequestById; 
 
     mapping(uint256=>address) connectRequestProfileBySocialRequestId; 
-    mapping(address=>mapping(uint256=>MediaMetaData)) mediaMetadataByIdByAddress; 
 
+    mapping(address=>mapping(uint256=>MediaMetaData)) mediaMetadataByIdByAddress; 
+    mapping(uint256=>address) metadataOwnerByMetadataId; 
     
     mapping(uint256=>bool) isBookedByMeetingTime; 
     mapping(uint256=>Meeting) meetingById; 
-
     mapping(uint256=>Meeting) meetingBySocialRequestId;
+
     mapping(address=>bool) isSupporter; 
     mapping(address=>mapping(string=>bool)) hasOutstandingRequestByAddress; 
     mapping(string=>bool) knownCid;
     
-   
+    mapping(string=>address) connectionProfileByName; 
+    mapping(address=>uint256) socialRequestIdByConnectionRequestor;
+
+    mapping(uint256=>MediaMetaData) mediaMetaDataById; 
+    mapping(uint256=>uint256) socialRequestIdByMetadataMediaId; 
 
     constructor(address _consoleAddress) {
        console = IOpenProfileConsole(_consoleAddress); 
        directory = IOpenDirectory(console.getDirectory());
-       
+       self = address(this); 
     }
 
     function getName() pure external returns (string memory _name) {
@@ -51,7 +58,6 @@ contract OpenProfile is IOpenProfile, IVersioning {
     function getVersion() pure external returns (uint256 _version) {
         return version; 
     }
-
 
     function getConsole() view external returns (address _console) {
         return address(console); 
@@ -89,6 +95,55 @@ contract OpenProfile is IOpenProfile, IVersioning {
         return console.getRewardsPool(); 
     }
 
+    function getPendingSocialRequests() view external returns (SocialRequest [] memory _requests) {
+        _requests = new SocialRequest[](pendingSocialRequests.length);
+        for(uint256 x = 0; x < _requests.length; x++) {
+            uint256 requestId_ =pendingSocialRequests[x]; 
+            if(!isClosedSocialRequestById[requestId_]){
+                _requests[x] = socialRequestById[requestId_];
+            }
+        }
+    }
+
+    function closeSocialRequests(uint256 [] memory _socialRequestIds) external returns (uint256 _closedCount) {
+        for(uint256 x = 0; x < _socialRequestIds.length; x++) {
+            uint256 requestId_ = _socialRequestIds[x];
+            _closedCount += closeSocialRequestInternal(requestId_);
+        }
+        return _closedCount; 
+    }
+
+
+    function getConnection(string memory _name) view external returns (address _profile){
+        return connectionProfileByName[_name];
+    }
+
+    // CONNECTIONS, SUPPORTERS, FOLLOWERS,
+    function getCommunityCount(string memory _communityType) view external returns (uint256 _count){
+       return console.getCommunityCount(_communityType);
+    }
+
+    function emptyFundsFromProfile(address _erc20) external returns (uint256 _amountEmptied) {
+        IERC20Metadata erc20_ = IERC20Metadata(_erc20);
+        _amountEmptied = erc20_.balanceOf(self);
+        erc20_.transfer( console.getAvatar().owner, _amountEmptied);
+        return _amountEmptied; 
+    }
+
+    function pullConnectProfile(uint256 _socialRequestId) view external returns (address _connectProfile) {
+        return connectRequestProfileBySocialRequestId[_socialRequestId];
+    }
+
+    function pullMedia(uint256 _socialRequestId) view external returns (MediaMetaData memory _media) {
+        return mediaMetaDataById[_socialRequestId];
+    }
+
+    function pullMeetings(uint256 _socialRequestId) view external returns (Meeting memory _meeting) {
+        return meetingById[_socialRequestId]; 
+    }
+
+
+
     //========================= External Write ============================================
 
     function follow() external returns (bool _followed) { 
@@ -121,13 +176,18 @@ contract OpenProfile is IOpenProfile, IVersioning {
     
         SocialRequest memory socialRequest_ = addSocialRequest(msg.sender, "CONNECT_REQUEST" );
         connectRequestProfileBySocialRequestId[socialRequest_.id] = resolveToProfile(msg.sender);
-
+        socialRequestIdByConnectionRequestor[msg.sender] = socialRequest_.id;   
         hasOutstandingRequestByAddress[msg.sender]["CONNECT"] = true; 
         return true; 
     }
 
     function cancelConnectionRequest() external returns (bool _cancelled) {
-
+        require( hasOutstandingRequestByAddress[msg.sender]["CONNECT"], "no request found" );
+        uint256 socialRequestId = socialRequestIdByConnectionRequestor[msg.sender];
+        delete connectRequestProfileBySocialRequestId[socialRequestId];
+        delete hasOutstandingRequestByAddress[msg.sender]["CONNECT"]; 
+        closeSocialRequestInternal(socialRequestId);
+        return true; 
     }
 
     function removeConnection() external returns (bool _connectionRemoved) {
@@ -143,53 +203,73 @@ contract OpenProfile is IOpenProfile, IVersioning {
         address [] memory participants_ = new address[](2);
         participants_[0] = msg.sender; 
         participants_[1] = console.getAvatar().owner;
+        SocialRequest memory socialRequest_ = addSocialRequest(msg.sender, "MEETING_REQUEST" );
         Meeting memory meeting_ = Meeting ({
-                                            id : console.getIndex(),
+                                            id : socialRequest_.id,
                                             participants : participants_,
                                             startTime : _meetingTime, 
                                             duration : console.getUINTProperty("MEETING_DURATION")
                                         });
-        SocialRequest memory socialRequest_ = addSocialRequest(msg.sender, "MEETING_REQUEST" );
+        
         meetingBySocialRequestId[socialRequest_.id] = meeting_; 
         return meeting_.id; 
     }   
 
     function cancelMeetingRequest(uint256 _meetingRequestId) external returns(bool _cancelled) {
+        Meeting memory meeting_ = meetingBySocialRequestId[_meetingRequestId];
+        require(msg.sender == meeting_.participants[0] || msg.sender == meeting_.participants[1], "unknown participant"); 
+        delete meetingBySocialRequestId[_meetingRequestId];
+        closeSocialRequestInternal(_meetingRequestId);
+        return true; 
 
     }  
 
 
-    function requestMediaShare(MediaMetaData [] memory _metadata ) external returns (uint256 _uniqueShareRequestCount){
+    function requestMediaShare(MediaMetaData memory _metadata ) external returns (bool _requested){
         doExternalSecurity(); 
-        for(uint256 x = 0; x < _metadata.length; x++){
-            MediaMetaData memory metadata_ = _metadata[x];
-            if(!isKnownsharedMediaByAddress[msg.sender][metadata_.id]
-                && !knownCid[metadata_.mediaCid] 
-                && !knownCid[metadata_.mediaMetadataCid]){
+        
+        if(!isKnownsharedMediaByAddress[msg.sender][_metadata.id]
+            && !knownCid[_metadata.mediaCid] 
+            && !knownCid[_metadata.mediaMetadataCid]){
 
-                knownCid[metadata_.mediaCid] = true; 
-                knownCid[metadata_.mediaMetadataCid] = true; 
-                isKnownsharedMediaByAddress[msg.sender][metadata_.id] = true; 
-                _uniqueShareRequestCount++; 
-                addSocialRequest(msg.sender, "MEDIA_SHARE_REQUEST" );
-            }
+            knownCid[_metadata.mediaCid] = true; 
+            knownCid[_metadata.mediaMetadataCid] = true; 
+            isKnownsharedMediaByAddress[msg.sender][_metadata.id] = true; 
+            mediaMetaDataById[_metadata.id] = _metadata; 
+            
+            SocialRequest memory socialRequest_ = addSocialRequest(msg.sender, "MEDIA_SHARE_REQUEST" );
+            socialRequestIdByMetadataMediaId[_metadata.id] = socialRequest_.id; 
         }
-        return _uniqueShareRequestCount;
+        
+        return true;
     }
 
     function cancelMediaShareRequest(uint256 [] memory _metadataIds) external returns (uint256 _cancelledCount) {
         for(uint256 x = 0; x < _metadataIds.length; x++) {
-            MediaMetaData memory metadata_ = _metadataIds[x];
+            uint256 metadataId_ = _metadataIds[x];
+            MediaMetaData memory metadata_ = mediaMetadataByIdByAddress[metadataOwnerByMetadataId[metadataId_]][metadataId_];
             if(isKnownsharedMediaByAddress[msg.sender][metadata_.id]){
-
+                delete mediaMetaDataById[metadataId_];
+                closeSocialRequestInternal(socialRequestIdByMetadataMediaId[metadataId_]);
+                _cancelledCount; 
             }
         }
+        return _cancelledCount;
     }
     //========================= INTERNAL ========================================================
 
+    function closeSocialRequestInternal(uint256 _requestId) internal returns (uint256 _closed) {
+         if(!isClosedSocialRequestById[_requestId]){ 
+                isClosedSocialRequestById[_requestId] = true; 
+                return 1; 
+        }
+        return 0; 
+    }
+
     function takePayment(uint256 _contribution, address _erc20) internal returns (bool _paid) {
         IERC20Metadata erc20_ = IERC20Metadata(_erc20);
-        erc20.transfer(msg.sender, console.getAvatar().owner, _contribution);
+        erc20_.transferFrom(msg.sender, self, _contribution);
+        erc20_.transfer(console.getAvatar().owner, _contribution);
         return true; 
     }
 
@@ -200,7 +280,7 @@ contract OpenProfile is IOpenProfile, IVersioning {
     function addSocialRequest(address _requestor, string memory _type) internal returns (SocialRequest memory _socialRequest) {
         _socialRequest = SocialRequest({
                                         id : console.getIndex(), 
-                                        requestor : msg.sender,  
+                                        requestor : _requestor,  
                                         requestType : _type
                                     });
         socialRequestById[_socialRequest.id] = _socialRequest; 
@@ -218,7 +298,7 @@ contract OpenProfile is IOpenProfile, IVersioning {
     }
    
     function doInternalSecurity() view internal returns (bool) {
-        require(console.isOwner(msg.sender), "owner only");
+        require(console.getAvatar().owner == msg.sender, "owner only");
         return true; 
     }
 

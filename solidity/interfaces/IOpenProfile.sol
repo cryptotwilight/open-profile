@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: APACHE 2.0
 pragma solidity ^0.8.20;
 
+// version 3
+
 import {SocialRequest, MediaMetaData, Meeting, Avatar, Social} from "./IOpenProfileConsole.sol";
 
 interface IOpenProfile {
@@ -31,7 +33,7 @@ interface IOpenProfile {
 
     //========================= External Write ============================================
 
-    function getRequests() view external returns (SocialRequest [] memory _requests);
+    function getPendingSocialRequests() view external returns (SocialRequest [] memory _requests);
 
         //======================== Followers =============================================
 
@@ -51,21 +53,26 @@ interface IOpenProfile {
 
     function cancelConnectionRequest() external returns (bool _cancelled);
 
-    function removeConnection() external returns (bool _connectionRemoved);
-
         //======================== Meetings =============================================
 
     function requestMeeting(uint256 _meetingTime) external returns (uint256 _meetingRequestId);
 
     function cancelMeetingRequest(uint256 _meetingRequestId) external returns(bool _cancelled);
 
-    function cancelMeeting(uint256 _meetingId) external returns (bool _cancelled);
-
         //======================== Media Share =============================================
 
-    function requestMediaShare(MediaMetaData [] memory metadata ) external returns (uint256 _uniqueShareRequestCount);
+    function requestMediaShare(MediaMetaData memory metadata ) external returns (bool _shareRequested);
 
     function cancelMediaShareRequest(uint256 [] memory _metadataIds) external returns (uint256 _cancelledMediaShareRequestCount);
+
+        //====================================================================================
+    function pullMedia(uint256 _socialRequestId) view external returns (MediaMetaData memory _media);
+
+    function pullMeetings(uint256 _socialRequestId) view external returns (Meeting memory _meeting);
+    
+    function pullConnectProfile(uint256 _socialRequestId) view external returns (address _connectProfile);
+
+    function closeSocialRequests(uint256 [] memory _socialRequestIds) external returns (uint256 _closedCount);
 
 }
 

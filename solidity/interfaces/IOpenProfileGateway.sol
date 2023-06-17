@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: APACHE 2.0
 pragma solidity ^0.8.20;
 
+// version 3
+
 import {Avatar} from "../interfaces/IOpenProfile.sol";
 
 struct OpGatewayConfig {
-    address owner; 
-    address admin; 
-    address paymentCurrency; 
+ 
     uint256 profilePrice; 
-    address profileFactory; 
+    address registry ; // owner, admin, payment currency
 
 }
 
@@ -17,8 +17,6 @@ interface IOpenProfileGateway {
     function getPaymentCurrency() view external returns (address _apeCoin);
 
     function getProfilePrice() view external returns (uint256 _price);
-    
-    function getProfile(address _owner) view external returns (address _profile);
 
     function findProfile(string memory _name) view external returns (address _profile);
 

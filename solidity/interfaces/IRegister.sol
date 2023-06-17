@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: APACHE 2.0
 pragma solidity ^0.8.20;
 
+// Version 1
+
 interface IRegister {
 
     function getAddress(string memory _name) view external returns (address _address);
