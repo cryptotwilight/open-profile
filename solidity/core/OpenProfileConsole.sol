@@ -8,7 +8,7 @@ import "../interfaces/IOpenDirectory.sol";
 contract OpenProfileConsole is IOpenProfileConsole, IVersioning {
     
     string constant name = "OPEN_PROFILE_CONSOLE";
-    uint256 constant  version = 2;
+    uint256 constant  version = 3;
 
     uint256 uniqueIndex; 
 
@@ -49,9 +49,10 @@ contract OpenProfileConsole is IOpenProfileConsole, IVersioning {
 
     mapping(address=>bool) isBarredCommunity; 
 
-    constructor(Avatar memory _avatar, address _directoryAddress) {
+    constructor(Avatar memory _avatar, address _rewardsPool,  address _directoryAddress) {
         avatar = _avatar; 
         directory = IOpenDirectory(_directoryAddress);
+        rewardsPool = _rewardsPool; 
         uniqueIndex = block.timestamp; 
     }
 

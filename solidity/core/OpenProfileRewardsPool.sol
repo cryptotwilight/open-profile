@@ -2,26 +2,29 @@
 pragma solidity ^0.8.20;
 
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/IOpenProfileRewardsPool.sol";
 import "../interfaces/IVersioning.sol";
 import "../interfaces/IApeCoinStakingProxy.sol";
 import "../interfaces/IOpenProfileConsole.sol";
+import "../interfaces/IRegister.sol";
 
 contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
 
         string constant name = "OPEN_PROFILE_APECOIN_REWARDS_POOL";
         uint256 constant version = 3; 
         address self; 
+  
+        string constant opProfileFactoryRegistryKey = "OP_PROFILE_FACTORY"; 
 
         string poolName; 
         
         address [] allRecipients; 
         mapping(address=>bool) isCurrentRecipient; 
-
-
-        IERC20Metadata apeCoin;
+            
+        IRegister registry; 
+        IERC20 apeCoin;
         IApeCoinStakingProxy apeCoinStaking; 
         IOpenProfileConsole console;  
 
@@ -30,14 +33,17 @@ contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
         uint256 availableRewards; // rewards left claimed - disbursed
         uint256 principleFunds = 0; 
 
+        bool isConsoleSet = false; 
+
         constructor(string memory _poolName, 
                             address _apeCoin,
                             address _apeCoinStaking, 
-                            address _openProfileConsole) {
+                            address _registry) {
             poolName        = _poolName; 
-            apeCoin         = IERC20Metadata(_apeCoin);
+            apeCoin         = IERC20(_apeCoin);
             apeCoinStaking  = IApeCoinStakingProxy(_apeCoinStaking);
-            console         = IOpenProfileConsole(_openProfileConsole);
+            registry = IRegister(_registry);
+
             self = address(this);
         }
 
@@ -136,6 +142,14 @@ contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
             require(isCurrentRecipient[_communityMemberProfile], " not recipient" );
             isCurrentRecipient[_communityMemberProfile] = false; 
             return true; 
+        }
+
+        function setConsole(address _console) external returns (bool _set) {
+            require(msg.sender == registry.getAddress(opProfileFactoryRegistryKey), "factory only " );
+            require(!isConsoleSet, "console already set");
+            console = IOpenProfileConsole(_console);
+            isConsoleSet = true; 
+            return isConsoleSet; 
         }
 
         // ============================ INTERNAL =============================================================================

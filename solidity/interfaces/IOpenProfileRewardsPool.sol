@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE 2.0
 pragma solidity ^0.8.20;
 
-// Version 1 
+// Version 3
 
 interface IOpenProfileRewardsPool {
 
@@ -34,5 +34,7 @@ interface IOpenProfileRewardsPool {
     function addRecipient(address _communityMemberProfile) external returns (bool _added);
 
     function removeRecipient(address _communityMemberProfile) external returns (bool _removed);
+
+    function setConsole(address _console) external returns (bool _set);
 
 }

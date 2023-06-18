@@ -33,7 +33,7 @@ struct Meeting {
 struct SocialRequest {
     uint256 id; 
     address requestor; 
-    string requestType; 
+    string requestType; // CONNECT_REQUEST, MEETING_REQUEST, MEDIA_SHARE_REQUEST, 
 
 }
 
@@ -59,11 +59,15 @@ interface IOpenProfileConsole {
     function getSocialRequests() view external returns (SocialRequest [] memory _requests);
 
 
+    function isBarred(address member) view external returns (bool isBarred); 
+
     function isCommunity(address _member, string memory _type) view external returns (bool _isCommunity);
 
     function addCommunity(address _member, string memory _type) external returns (bool _added);
 
     function removeCommunity(address _member, string memory _type) external returns (bool _removed);
+
+    function barCommunity(address _member) external returns (bool _barred);
 
 
     function acceptSocialRequest(uint256 [] memory socialRequestIds) external returns (bool _accepted);
@@ -71,7 +75,7 @@ interface IOpenProfileConsole {
     function rejectSocialRequest(uint256 [] memory socialRequestIds) external returns (bool _accepted);
 
 
-    function shareMedia(uint256 [] memory _mediaIds, address [] memory _connections) external returns (bool _shared); 
+    function shareMedia(uint256 _mediaId, address [] memory _connections) external returns (bool _shared); 
 
     function addMedia(MediaMetaData [] memory _media) external returns (uint256 _addedCount);
 
@@ -87,5 +91,7 @@ interface IOpenProfileConsole {
 
     // PAYMENT_CURRENCY
     function getAddressProperty(string memory _property) view external returns (address _address);
+
+    function setProfile(address _profile) external returns (bool _set);
 
 }

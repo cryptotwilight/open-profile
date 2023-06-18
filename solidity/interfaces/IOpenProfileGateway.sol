@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE 2.0
 pragma solidity ^0.8.20;
 
-// version 3
+// version 4
 
 import {Avatar} from "../interfaces/IOpenProfile.sol";
 
