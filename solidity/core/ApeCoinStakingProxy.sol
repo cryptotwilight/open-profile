@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.8.2 <0.9.0;
+pragma solidity ^0.8.20;
 
 
 import "https://github.com/HorizenLabs/ape-staking-public/blob/6b86a6d92153455fe9f33b0bda16e4141099fc7d/contracts/ApeCoinStaking.sol";
 
+import "https://github.com/Block-Star-Logic/open-register/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenRegister.sol";
+import "https://github.com/Block-Star-Logic/open-version/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenVersion.sol";
 
 import "../interfaces/IApeCoinStakingProxy.sol";
-import "../interfaces/IRegister.sol";
 
-contract ApeCoinStakingProxy is IApeCoinStakingProxy { 
+
+contract ApeCoinStakingProxy is IApeCoinStakingProxy, IOpenVersion { 
 
     string constant name = "APE_COIN_STAKING_PROXY";
-    uint256 constant version = 2; 
+    uint256 constant version = 3; 
 
     string constant apeCoinStakingRegistryKey   = "APE_COIN_STAKING";
     string constant apeCoinRegistryKey          = "APE_COIN"; 
@@ -23,10 +25,10 @@ contract ApeCoinStakingProxy is IApeCoinStakingProxy {
     address rewardsPool;
     address self; 
     bool rewardsPoolSet = false; 
-    IRegister registry; 
+    IOpenRegister registry; 
 
     constructor( address _registry) {
-        registry = IRegister(_registry);
+        registry = IOpenRegister(_registry); 
         apeCoinStaking = ApeCoinStaking(registry.getAddress(apeCoinStakingRegistryKey)); 
         apeCoin = IERC20(registry.getAddress(apeCoinRegistryKey));
         self = address(this); 

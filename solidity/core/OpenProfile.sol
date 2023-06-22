@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: APACHE 2.0
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity ^0.8.20;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "https://github.com/Block-Star-Logic/open-version/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenVersion.sol";
 
-import "../interfaces/IVersioning.sol";
 import "../interfaces/IOpenProfile.sol";
 import "../interfaces/IOpenProfileConsole.sol";
 import "../interfaces/IOpenDirectory.sol";
 
-contract OpenProfile is IOpenProfile, IVersioning {
+contract OpenProfile is IOpenProfile, IOpenVersion  {
 
 
     string constant name = "OPEN_PROFILE"; 
-    uint256 constant version = 3;   
+    uint256 constant version = 4;   
     address self; 
 
     IOpenProfileConsole console;    

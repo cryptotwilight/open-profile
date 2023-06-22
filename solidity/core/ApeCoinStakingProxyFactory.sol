@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.20;
 
-import "../interfaces/IVersioning.sol";
+import "https://github.com/Block-Star-Logic/open-version/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenVersion.sol";
+import "https://github.com/Block-Star-Logic/open-register/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenRegister.sol";
+
 import "../interfaces/IApeCoinStakingProxyFactory.sol";
-import "../interfaces/IRegister.sol";
 import "./ApeCoinStakingProxy.sol";
 
 
 
-contract ApeCoinStakingProxyFactory is IVersioning, IApeCoinStakingProxyFactory {
+contract ApeCoinStakingProxyFactory is IOpenVersion, IApeCoinStakingProxyFactory {
 
     string constant name = "APE_COIN_STAKING_PROXY_FACTORY";
-    uint256 constant version = 1; 
+    uint256 constant version = 2; 
 
-    IRegister registry; 
+    IOpenRegister registry; 
     string constant opProfileFactory = "OP_PROFILE_FACTORY"; 
 
     mapping(address=>bool) recognisedApeCoinStakingProxy; 
 
     constructor(address _register) {
-        registry = IRegister(_register);
+        registry = IOpenRegister(_register);
     }
 
     function getName() pure external returns (string memory _name) {

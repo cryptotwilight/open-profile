@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity >=0.8.2 <0.9.0;
+pragma solidity ^0.8.20;
 
-import "../interfaces/IVersioning.sol";
-import "../interfaces/IRegister.sol"; 
+import "https://github.com/Block-Star-Logic/open-version/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenVersion.sol";
+import "https://github.com/Block-Star-Logic/open-register/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenRegister.sol";
 
 import "../interfaces/IOpenProfileGateway.sol";
 import "../interfaces/IApeCoinStakingProxy.sol";
@@ -18,10 +18,10 @@ import "../interfaces/IOpenProfileRewardsPoolFactory.sol";
 import "./OpenProfile.sol";
 
 
-contract ProfileFactory is IProfileFactory, IVersioning {
+contract ProfileFactory is IProfileFactory, IOpenVersion {
 
     string constant name = "OP_PROFILE_FACTORY";
-    uint256 constant version = 3; 
+    uint256 constant version = 4; 
 
     string constant openProfileGatewayRegistryKey            = "OPEN_PROFILE_GATEWAY";
     string constant openProfileRewardsPoolFactoryRegistryKey = "OP_REWARDS_POOL_FACTORY";
@@ -29,7 +29,7 @@ contract ProfileFactory is IProfileFactory, IVersioning {
     string constant apeCoinProxyFactoryRegistryKey           = "APE_COIN_STAKING_PROXY_FACTORY";
     string constant apeCoinRegistryKey                       = "APE_COIN";
 
-    IRegister registry; 
+    IOpenRegister registry; 
     IOpenProfileGateway gateway;
     IApeCoinStakingProxyFactory proxyFactory;
     IOpenProfileRewardsPoolFactory rewardsPoolFactory;
@@ -40,11 +40,11 @@ contract ProfileFactory is IProfileFactory, IVersioning {
     
 
     constructor(address _register) {
-        registry = IRegister(_register);
-        gateway = IOpenProfileGateway(registry.getAddress(openProfileGatewayRegistryKey));
-        proxyFactory = IApeCoinStakingProxyFactory(registry.getAddress(apeCoinProxyFactoryRegistryKey));
-        rewardsPoolFactory = IOpenProfileRewardsPoolFactory(registry.getAddress(openProfileConsoleFactoryRegistryKey));
-        consoleFactory = IOpenProfileConsoleFactory(registry.getAddress(openProfileConsoleFactoryRegistryKey));
+        registry            = IOpenRegister(_register);
+        gateway             = IOpenProfileGateway(registry.getAddress(openProfileGatewayRegistryKey));
+        proxyFactory        = IApeCoinStakingProxyFactory(registry.getAddress(apeCoinProxyFactoryRegistryKey));
+        rewardsPoolFactory  = IOpenProfileRewardsPoolFactory(registry.getAddress(openProfileConsoleFactoryRegistryKey));
+        consoleFactory      = IOpenProfileConsoleFactory(registry.getAddress(openProfileConsoleFactoryRegistryKey));
     }
 
     function getName() pure external returns (string memory _name) {

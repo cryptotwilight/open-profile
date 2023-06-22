@@ -1,19 +1,22 @@
-// SPDX-License-Identifier: APACHE 2.0
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity ^0.8.20;
 
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
+import "https://github.com/Block-Star-Logic/open-version/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenVersion.sol";
+import "https://github.com/Block-Star-Logic/open-register/blob/main/blockchain_ethereum/solidity/V1/interfaces/IOpenRegister.sol";
+
 import "../interfaces/IOpenProfileRewardsPool.sol";
-import "../interfaces/IVersioning.sol";
 import "../interfaces/IApeCoinStakingProxy.sol";
 import "../interfaces/IOpenProfileConsole.sol";
-import "../interfaces/IRegister.sol";
 
-contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
+
+contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IOpenVersion {
 
         string constant name = "OPEN_PROFILE_APECOIN_REWARDS_POOL";
-        uint256 constant version = 3; 
+        uint256 constant version = 4; 
         address self; 
   
         string constant opProfileFactoryRegistryKey = "OP_PROFILE_FACTORY"; 
@@ -23,7 +26,7 @@ contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
         address [] allRecipients; 
         mapping(address=>bool) isCurrentRecipient; 
             
-        IRegister registry; 
+        IOpenRegister registry; 
         IERC20 apeCoin;
         IApeCoinStakingProxy apeCoinStaking; 
         IOpenProfileConsole console;  
@@ -42,7 +45,7 @@ contract OpenProfileRewardsPool is IOpenProfileRewardsPool, IVersioning {
             poolName        = _poolName; 
             apeCoin         = IERC20(_apeCoin);
             apeCoinStaking  = IApeCoinStakingProxy(_apeCoinStaking);
-            registry = IRegister(_registry);
+            registry        = IOpenRegister(_registry);
 
             self = address(this);
         }
