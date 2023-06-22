@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: APACHE 2.0
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity ^0.8.20;
 
-// version 3
+// version 4
 
 import {SocialRequest, MediaMetaData, Meeting, Avatar, Social} from "./IOpenProfileConsole.sol";
 

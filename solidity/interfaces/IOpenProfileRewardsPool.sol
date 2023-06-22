@@ -1,40 +1,31 @@
-// SPDX-License-Identifier: APACHE 2.0
+// SPDX-License-Identifier: GPL-3.0
+
 pragma solidity ^0.8.20;
 
-// Version 3
+// version 1
 
-interface IOpenProfileRewardsPool {
+interface IOpenProfileRewardsPool { 
 
+        function getAvailableApeCoinRewards() view external returns (uint256 _rewards);
 
-    // name of this rewards pool 
-    function getPoolName() view external returns (string memory _poolName);
+        function getRecipients() view external returns (address [] memory _profiles);
 
-    // distributable rewards
-    function getAvailableApeCoinRewards() view external returns (uint256 _rewards);
+        function getClaimableRewards() view external returns (uint256 _claimableRewards);
 
-    // recipients of ape coin rewards from pool 
-    function getRecipients() view external returns (address [] memory _profiles);
-    
-    // Ape Coin protocol claimable rewards
-    function getClaimableRewards() external returns (uint256 _claimableRewards);
+        function claimApeCoinRewardsForCommunity() external returns (uint256 _claimed) ;
 
-    // action reward claim from ApeCoin protocol
-    function claimApeCoinRewardsForCommunity() external returns (uint256 _claimed);
-    // issue a given level of reward to a specific community member
-    function issueApeCoinReward(address _communityMemberProfile, uint256 _amount) external returns (uint256 _amountRewarded);
+        function issueApeCoinReward(address _communityMemberProfile, uint256 _amount) external returns (uint256 _amountRewarded) ;
 
-    function grantPrincipalFunds(uint256 _amount) external returns (uint256 _principleBalance);
+        function grantPrincipalFunds(uint256 _amount) external returns (uint256 _principleBalance);
 
-    function withdrawPrincipalFunds(uint256 _amount) external returns (bool _withdrawn);
+        function withdrawPrincipalFunds(uint256 _amount) external returns (bool _withdrawn);
 
+        // disburse rewaards to your entire community 
+        function disburseApeCoinRewards(uint256 _totalAmount) external returns (bool _rewardsDisbursed);
 
-    // disburse rewaards to your entire community 
-    function disburseApeCoinRewards(uint256 _totalAmount) external returns (bool _rewardsDisbursed);
+        function addRecipient(address _communityMemberProfile) external returns (bool _added);
 
-    function addRecipient(address _communityMemberProfile) external returns (bool _added);
+        function removeRecipient(address _communityMemberProfile) external returns (bool _removed);
 
-    function removeRecipient(address _communityMemberProfile) external returns (bool _removed);
-
-    function setConsole(address _console) external returns (bool _set);
-
+        function setConsole(address _console) external returns (bool _set);
 }
